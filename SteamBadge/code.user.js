@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steam Badge Buy Card
 // @namespace    https://github.com/herbix
-// @version      1.0.0-alpha
+// @version      1.0.1-alpha
 // @license      GPLv3
 // @description  Helper to buy cards in steam badge page
 // @author       Chaofan
@@ -10,8 +10,8 @@
 // @require      https://code.jquery.com/ui/1.12.1/jquery-ui.js
 // @homepageURL  https://github.com/herbix/MyTamperMonkeyScriptCollection
 // @supportURL   https://github.com/herbix/MyTamperMonkeyScriptCollection
-// @downloadURL  https://raw.githubusercontent.com/herbix/MyTamperMonkeyScriptCollection/master/SteamBadge/code.js
-// @updateURL    https://raw.githubusercontent.com/herbix/MyTamperMonkeyScriptCollection/master/SteamBadge/code.js
+// @downloadURL  https://raw.githubusercontent.com/herbix/MyTamperMonkeyScriptCollection/master/SteamBadge/code.user.js
+// @updateURL    https://raw.githubusercontent.com/herbix/MyTamperMonkeyScriptCollection/master/SteamBadge/code.user.js
 // ==/UserScript==
 
 (function() {
