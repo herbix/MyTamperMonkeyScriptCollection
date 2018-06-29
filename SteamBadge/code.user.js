@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steam Badge Buy Card
 // @namespace    https://github.com/herbix
-// @version      1.0.1-alpha
+// @version      1.0.2-alpha
 // @license      GPLv3
 // @description  Helper to buy cards in steam badge page
 // @author       Chaofan
@@ -17,6 +17,8 @@
 (function() {
     'use strict';
     var $ = jQuery;
+    
+    var buyCardsString = "购买卡牌";
 
     function log(message) {
         console.log("Steam Badge Buy Card: " + message);
@@ -40,7 +42,7 @@
     var currencySuffix = "";
     var cardsInformation = {};
 
-    var buyCardButton = $('<a class="btn_grey_grey btn_small_thin" href="javascript:;"><span>购买卡牌</span></a>');
+    var buyCardButton = $('<a class="btn_grey_grey btn_small_thin" href="javascript:;">' + buyCardsString + '<span></span></a>');
     buyCardButton.click(showBuyCardDialog);
     
     function loadCardSetInfo(count) {
@@ -190,7 +192,7 @@
         var buttonDown = $('<a class="btn_green_white_innerfade btn_small_thin"><span>-1</span></a>');
         var price = $('<input style="width:50px" type="text" value="' + (maxPrice / 100.0) + '"/>');
         var topBar = $('<div style="float:right;margin:5px"></div>');
-        var buyAllButton = $('<a class="btn_green_white_innerfade btn_medium_wide" style="min-width:140px"><span>购买所有</span></a>');
+        var buyAllButton = $('<a class="btn_green_white_innerfade btn_medium_wide" style="min-width:140px"><span>' + buyCardsString + '</span></a>');
         
         buttonUp.click(function() {
             for (var i=0; i<amountInputs.length; i++) {
@@ -228,7 +230,7 @@
                 sum += amount * price;
             }
             
-            buyAllButton.find("span").text("购买所有(" + currencyPrefix + (sum / 100.0) + currencySuffix + ")");
+            buyAllButton.find("span").text(buyCardsString + "(" + currencyPrefix + (sum / 100.0) + currencySuffix + ")");
         }
         
         var buying = false;
@@ -345,7 +347,7 @@
         buyAllButtonOuter.append(buyAllButton);
         base.append(buyAllButtonOuter);
         
-        ShowDialog("购买卡牌", base);
+        ShowDialog(buyCardsString, base);
     }
     
     getWalletInfo();
