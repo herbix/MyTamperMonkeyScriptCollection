@@ -38,7 +38,14 @@ var AsyncRunner = (function() {
         return currentRun;
     }
     
+    function prepare() {
+        return run(function(data, onfinish) {
+            onfinish(data);
+        });
+    }
+    
     return {
-        run: run
+        run: run,
+        prepare: prepare
     }
 })();
