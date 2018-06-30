@@ -1,0 +1,23 @@
+<script src="asyncrunner.js"></script>
+Test
+<script>
+AsyncRunner.run(function(data, onfinish) {
+    console.log("1:" + data);
+    setTimeout(function() {
+        onfinish(data + 1);
+    }, 1000);
+}).then(function(data, onfinish) {
+    console.log("2:" + data);
+    setTimeout(function() {
+        onfinish(data + 1);
+    }, 1000);
+}).then(function(data, onfinish) {
+    console.log("3:" + data);
+    setTimeout(function() {
+        onfinish(data + 1);
+    }, 1000);
+}).delay(function(data, onfinish) {
+    console.log("4:" + data);
+    onfinish(data + 1);
+}, 1000).start(1);
+</script>
