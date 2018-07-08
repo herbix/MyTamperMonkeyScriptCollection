@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steam Badge Buy Card
 // @namespace    https://github.com/herbix
-// @version      1.0.4-alpha
+// @version      1.0.5-alpha
 // @license      GPLv3
 // @description  Helper to buy cards in steam badge page
 // @author       Chaofan
@@ -19,10 +19,24 @@
 (function() {
     'use strict';
     var $ = jQuery;
-    var _buyCardsString = "购买卡牌";
-    var _badgeOwner;
-    var _badgeAppId;
-    var _border;
+
+    var _csBuyCards = "购买卡牌";
+    var _csNotOrdered = "以下列表未按卡牌顺序列出";
+
+    var _iBadgeOwner;
+    var _iBadgeAppId;
+    var _iBorder;
+
+    var _cBuyCardButton = $('<a class="btn_grey_grey btn_small_thin" href="javascript:;"><span>' + _csBuyCards + '</span></a>');
+
+    var _oInventory;
+    var _oCardSetInfomation;
+    var _oWalletInfo;
+    var _oCurrencyData;
+    var _sCurrencyPrefix = "";
+    var _sCurrencySuffix = "";
+    var _aCards = [];
+    var _oCardsInformation = {};
 
     function log(message) {
         console.log("Steam Badge Buy Card: " + message);
@@ -38,15 +52,15 @@
             }
             isId = true;
         }
-        
-        _border = window.location.href.match(/border=1/) != null ? 1 : 0;
-        _badgeOwner = hrefMatch[2];
-        _badgeAppId = hrefMatch[3];
+
+        _iBorder = window.location.href.match(/border=1/) != null ? 1 : 0;
+        _iBadgeOwner = hrefMatch[2];
+        _iBadgeAppId = hrefMatch[3];
 
         if (isId) {
             return $('.gamecards_inventorylink').length > 0;
         } else {
-            if (g_steamID != _badgeOwner) {
+            if (g_steamID != _iBadgeOwner) {
                 log("not current user: " + hrefMatch[2]);
                 return false;
             }
@@ -54,16 +68,6 @@
 
         return true;
     }
-
-    var _cBuyCardButton = $('<a class="btn_grey_grey btn_small_thin" href="javascript:;"><span>' + _buyCardsString + '</span></a>');
-
-    var _oInventory;
-    var _oCardSetInfomation;
-    var _oWalletInfo;
-    var _oCurrencyData;
-    var _sCurrencyPrefix = "";
-    var _sCurrencySuffix = "";
-    var _oCardsInformation = {};
 
     function fillCardInfomartion() {
         for (var i=0; i<_oCardSetInfomation.results.length; i++) {
@@ -87,7 +91,7 @@
     }
 
     function loadCardSetInfo(count, success) {
-        $.get("https://steamcommunity.com/market/search/render/", "query=&category_753_Game%5B%5D=tag_app_" + _badgeAppId + "&category_753_cardborder%5B%5D=tag_cardborder_" + _border + "&category_753_item_class%5B%5D=tag_item_class_2&appid=753&norender=1&count=" + count, function(result) {
+        $.get("https://steamcommunity.com/market/search/render/", "query=&category_753_Game%5B%5D=tag_app_" + _iBadgeAppId + "&category_753_cardborder%5B%5D=tag_cardborder_" + _iBorder + "&category_753_item_class%5B%5D=tag_item_class_2&appid=753&norender=1&count=" + count, function(result) {
             if (result.total_count > count) {
                 loadCardSetInfo(result.total_count, success);
                 return;
@@ -157,11 +161,11 @@
         for (i=0; i<assets.length; i++) {
             var asset = assets[i];
             var desc = descMap[asset.classid];
-            if (desc.market_fee_app == _badgeAppId) {
+            if (desc.market_fee_app == _iBadgeAppId) {
                 var tagCheck = false;
                 for (var j=0; j<desc.tags.length; j++) {
                     var tag = desc.tags[j];
-                    if (tag.category == "cardborder" && tag.internal_name == "cardborder_" + _border) {
+                    if (tag.category == "cardborder" && tag.internal_name == "cardborder_" + _iBorder) {
                         tagCheck = true;
                         break;
                     }
@@ -184,7 +188,7 @@
 
         console.log(_oCardsInformation);
     }
-    
+
     function sendBuyRequest(cardHash, amount, price, item, success) {
         var callback = function(result) {
             if (result.success == 1) {
@@ -234,7 +238,7 @@
         var buttonDown = $('<a class="btn_green_white_innerfade btn_small_thin"><span>-1</span></a>');
         var price = $('<input style="width:50px" type="text" value="' + (maxPrice / 100.0) + '"/>');
         var topBar = $('<div style="float:right;margin:5px"></div>');
-        var buyAllButton = $('<a class="btn_green_white_innerfade btn_medium_wide" style="min-width:140px"><span>' + _buyCardsString + '</span></a>');
+        var buyAllButton = $('<a class="btn_green_white_innerfade btn_medium_wide" style="min-width:140px"><span>' + _csBuyCards + '</span></a>');
 
         buttonUp.click(function() {
             for (var i=0; i<amountInputs.length; i++) {
@@ -272,7 +276,7 @@
                 sum += amount * price;
             }
 
-            buyAllButton.find("span").text(_buyCardsString + "(" + _sCurrencyPrefix + (sum / 100.0) + _sCurrencySuffix + ")");
+            buyAllButton.find("span").text(_csBuyCards + "(" + _sCurrencyPrefix + (sum / 100.0) + _sCurrencySuffix + ")");
         }
 
         var buying = false;
@@ -289,6 +293,12 @@
 
             var cards = {};
             var runner = AsyncRunner.prepare();
+            var insertToRunner = function(cardHash, amount, price, item) {
+                runner = runner.then(function(_, onfinish) {
+                    sendBuyRequest(cardHash, amount, price, item, onfinish);
+                });
+            }
+
             for (var i=0; i<amountInputs.length; i++) {
                 var amountInput = amountInputs[i];
                 var priceInput = priceInputs[i];
@@ -299,21 +309,16 @@
                 var item = items[i];
 
                 item.animate({backgroundColor: 'transparent'});
-
-                (function(cardHash, amount, price, item) {
-                    runner = runner.then(function(_, onfinish) {
-                        sendBuyRequest(cardHash, amount, price, item, onfinish);
-                    });
-                })(cardHash, amount, price, item);
+                insertToRunner(cardHash, amount, price, item);
             }
-            
+
             runner = runner.then(function(_, onfinish) {
                 loading.remove();
                 buying = false;
                 buyAllButton.removeClass('btn_disabled');
                 onfinish();
             });
-            
+
             runner.start();
         });
 
@@ -327,11 +332,22 @@
         topBar.append(price);
         topBar.append(_sCurrencySuffix);
 
+        var keys;
+        if (_aCards != null) {
+            keys = _aCards;
+        } else {
+            keys = [];
+            for (k in _oCardsInformation) {
+                keys.push(k);
+            }
+            base.append('<div style="padding:10px;background:#803030">' + _csNotOrdered + '</div>');
+        }
+
         base.append(topBar);
         base.append('<div style="clear:both;"></div>');
 
-        for (k in _oCardsInformation) {
-            cardInfo = _oCardsInformation[k];
+        for (k=0; k<keys.length; k++) {
+            cardInfo = _oCardsInformation[keys[k]];
             var amountInput = $('<input style="width:50px;" type="text" value="' + (maxAmount - cardInfo.amount) + '" />');
             var priceInput = $('<input style="width:50px;" type="text" value="' + (cardInfo.price / 100.0) + '" /></div>');
             var item = $('<div style="vertical-align:middle;padding:5px"><img src="' + cardInfo.icon + '" style="vertical-align:middle"/>' +
@@ -363,7 +379,49 @@
         buyAllButtonOuter.append(buyAllButton);
         base.append(buyAllButtonOuter);
 
-        ShowDialog(_buyCardsString, base);
+        ShowDialog(_csBuyCards, base);
+    }
+
+    function getCardsOrder() {
+        var cardItems = $(".badge_card_set_card");
+        var cardNames = [];
+        var cardAmounts = [];
+        var i;
+
+        cardItems.each(function(index, o) {
+            var item = $(o);
+            var cardTextObj = item.find(".badge_card_set_text:first");
+            var cardName = cardTextObj.contents().filter(function(index, elem) { return elem.nodeType === 3 && $(elem).text().trim() != ""; }).first().text().trim();
+            var cardAmountObj = cardTextObj.children(".badge_card_set_text_qty");
+            var cardAmount = cardAmountObj.length == 0 ? 0 : cardAmountObj.text();
+
+            if (cardAmountObj.length != 0) {
+                cardAmount = parseInt(cardAmount.substring(1, cardAmount.length - 1));
+            }
+
+            cardNames.push(cardName);
+            cardAmounts.push(cardAmount);
+        });
+
+        for (var k in _oCardsInformation) {
+            var item = _oCardsInformation[k];
+            for (i=0; i<cardNames.length; i++) {
+                if (item.name == cardNames[i] || (item.name.startsWith(cardNames[i]) && item.name.substring(cardNames[i].length).match(/^\s*\([^\)]+\)\s*$/) != null)) {
+                    break;
+                }
+            }
+
+            if (i == cardNames.length) {
+                _aCards = null;
+                return false;
+            }
+
+            _aCards[i] = k;
+            item.amount = cardAmounts[i];
+        }
+
+        console.log(_aCards);
+        return true;
     }
 
     if (!parseCurrentURL()) {
@@ -380,9 +438,15 @@
     })
     .then(function(_, onfinish) {
         fillCardInfomartion();
-        getInventory(100, onfinish);
+        if (getCardsOrder()) {
+            _cBuyCardButton.click(showBuyCardDialog);
+            $('.gamecards_inventorylink').append(_cBuyCardButton);
+            // don't call onfinish to exit
+        } else {
+            getInventory(100, onfinish);
+        }
     })
-    .then(function(_, onfinish) {
+    .then (function(_, onfinish) {
         fillCardAmounts();
         _cBuyCardButton.click(showBuyCardDialog);
         $('.gamecards_inventorylink').append(_cBuyCardButton);
@@ -390,4 +454,4 @@
     })
     .start();
 
-})();;
+})();
