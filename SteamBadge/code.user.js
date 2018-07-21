@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steam Badge Buy Card
 // @namespace    https://github.com/herbix
-// @version      1.0.5-alpha
+// @version      1.0.6-alpha
 // @license      GPLv3
 // @description  Helper to buy cards in steam badge page
 // @author       Chaofan
@@ -9,7 +9,7 @@
 // @include      *://steamcommunity.com/id/*/gamecards/*
 // @require      https://code.jquery.com/jquery-3.3.1.min.js
 // @require      https://code.jquery.com/ui/1.12.1/jquery-ui.js
-// @require      https://raw.githubusercontent.com/herbix/MyTamperMonkeyScriptCollection/master/common/asyncrunner-0.1.0.js
+// @require      https://raw.githubusercontent.com/herbix/MyTamperMonkeyScriptCollection/master/common/asyncrunner-0.1.1.js
 // @homepageURL  https://github.com/herbix/MyTamperMonkeyScriptCollection
 // @supportURL   https://github.com/herbix/MyTamperMonkeyScriptCollection
 // @downloadURL  https://raw.githubusercontent.com/herbix/MyTamperMonkeyScriptCollection/master/SteamBadge/code.user.js
@@ -21,6 +21,7 @@
     var $ = jQuery;
 
     var _csBuyCards = "购买卡牌";
+    var _csBuyCardsDone = "购买完成";
     var _csNotOrdered = "以下列表未按卡牌顺序列出";
 
     var _iBadgeOwner;
@@ -29,7 +30,7 @@
 
     var _cBuyCardButton = $('<a class="btn_grey_grey btn_small_thin" href="javascript:;"><span>' + _csBuyCards + '</span></a>');
 
-    var _oInventory;
+    var _oInventory = null;
     var _oCardSetInfomation;
     var _oWalletInfo;
     var _oCurrencyData;
@@ -314,8 +315,7 @@
 
             runner = runner.then(function(_, onfinish) {
                 loading.remove();
-                buying = false;
-                buyAllButton.removeClass('btn_disabled');
+                buyAllButton.text(_csBuyCardsDone);
                 onfinish();
             });
 
@@ -439,15 +439,15 @@
     .then(function(_, onfinish) {
         fillCardInfomartion();
         if (getCardsOrder()) {
-            _cBuyCardButton.click(showBuyCardDialog);
-            $('.gamecards_inventorylink').append(_cBuyCardButton);
-            // don't call onfinish to exit
+            onfinish();
         } else {
             getInventory(100, onfinish);
         }
     })
-    .then (function(_, onfinish) {
-        fillCardAmounts();
+    .then(function(_, onfinish) {
+        if (_oInventory != null) {
+            fillCardAmounts();
+        }
         _cBuyCardButton.click(showBuyCardDialog);
         $('.gamecards_inventorylink').append(_cBuyCardButton);
         onfinish();

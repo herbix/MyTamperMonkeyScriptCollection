@@ -1,0 +1,10 @@
+{
+    "__comments": [
+        "This file is for vscode code completion."
+    ],
+    "typeAcquisition": {
+        "include": [
+            "jquery"
+        ]
+    }
+}

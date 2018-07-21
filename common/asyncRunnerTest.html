@@ -1,4 +1,4 @@
-<script src="asyncrunner.js"></script>
+<script src="asyncrunner-0.1.1.js"></script>
 Test
 <script>
 AsyncRunner.run(function(data, onfinish) {
@@ -20,4 +20,28 @@ AsyncRunner.run(function(data, onfinish) {
     console.log("4:" + data);
     onfinish(data + 1);
 }, 1000).start(1);
+
+var runner = AsyncRunner.run(function(data, onfinish) {
+  console.log("1:" + data);
+  setTimeout(function() {
+    onfinish(data + 1);
+  }, 1000);
+});
+
+runner.then(function(data, onfinish) {
+  console.log("2:" + data);
+  setTimeout(function() {
+    onfinish(data + 1);
+  }, 1000);
+});
+
+runner.then(function(data, onfinish) {
+  console.log("3:" + data);
+  setTimeout(function() {
+    onfinish(data + 1);
+  }, 1000);
+});
+
+runner.start(10);
+
 </script>
